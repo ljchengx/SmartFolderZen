@@ -126,7 +126,7 @@ mod tests {
         let settings = AppSettings {
             folder_path: temp_dir.path().to_string_lossy().to_string(),
             date_format: DateFormat::YYYYMMDD,
-            auto_start: false,
+            auto_start: true,
             auto_create_on_startup: true,
         };
 

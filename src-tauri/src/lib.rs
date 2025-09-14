@@ -40,6 +40,15 @@ pub fn run() {
             // 创建系统托盘
             tray::create_tray(app.handle())?;
             
+            // 如果启用了自动启动，则确保自动启动功能开启
+            if settings.auto_start {
+                use tauri_plugin_autostart::ManagerExt;
+                let autostart = app.autolaunch();
+                if let Err(e) = autostart.enable() {
+                    eprintln!("Failed to enable autostart on startup: {}", e);
+                }
+            }
+            
             // 如果启用了启动时自动创建，则创建今天的文件夹
             if settings.auto_create_on_startup {
                 if let Err(e) = FolderManager::create_today_folder(&settings) {

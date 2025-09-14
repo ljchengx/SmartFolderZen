@@ -1,7 +1,7 @@
 {
   "name": "smart_folder_zen",
   "private": false,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "智能文件夹自动创建工具 - 基于日期格式自动创建文件夹的桌面应用程序",
   "author": "ljchengx",
   "license": "MIT",

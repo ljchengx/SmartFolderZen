@@ -99,6 +99,7 @@ smart_folder_zen/
 2. **图标一致性**：所有图标都基于统一的 logo.png 设计，自动生成多种格式
 3. **安装包限制**：永远只生成 MSI 包，不生成 NSIS 包
 4. **默认行为**：开机启动和自动创建文件夹是默认开启的核心功能，不需要用户干预
+5. **自动启动实现**：应用程序默认开启自动启动功能，在 `settings.rs` 中 `auto_start: true`，启动时自动配置系统自动启动
 
 ## 构建和测试
 
@@ -143,6 +144,43 @@ npm run tauri:build
 - **最大宽度**：内容区域限制为 720px，确保良好的阅读体验
 - **内边距**：48px 垂直，32px 水平，提供充足的呼吸感
 
+## 自动启动功能
+
+### 实现原理
+应用程序默认启用自动启动功能，通过以下方式实现：
+
+1. **默认配置**：在 `src-tauri/src/settings.rs:38` 中设置 `auto_start: true`
+2. **启动时激活**：在 `src-tauri/src/lib.rs:43-50` 中，应用启动时自动调用系统自动启动API
+3. **插件支持**：使用 `tauri_plugin_autostart` 插件处理不同操作系统的自动启动机制
+
+### 技术实现
+```rust
+// settings.rs - 默认开启自动启动
+impl Default for AppSettings {
+    fn default() -> Self {
+        Self {
+            auto_start: true,  // 默认开启
+            auto_create_on_startup: true,
+            // ...
+        }
+    }
+}
+
+// lib.rs - 启动时自动配置系统自动启动
+if settings.auto_start {
+    use tauri_plugin_autostart::ManagerExt;
+    let autostart = app.autolaunch();
+    if let Err(e) = autostart.enable() {
+        eprintln!("Failed to enable autostart on startup: {}", e);
+    }
+}
+```
+
+### 平台支持
+- **Windows**：注册表启动项
+- **macOS**：LaunchAgent 机制
+- **Linux**：支持多种桌面环境的自动启动机制
+
 ## 图标管理
 
 ### 图标文件结构
@@ -160,14 +198,21 @@ src-tauri/icons/
 
 ### 图标生成
 当需要更新图标时：
-1. 将新的 logo.png 文件放入 `src-tauri/icons/` 目录
+1. 将新的 logo.png 文件准备好（建议1024x1024像素）
 2. 使用 Python 脚本自动生成所有格式：
    ```python
-   # 使用 Pillow 库生成各种尺寸的图标
-   # 支持 PNG (多尺寸) 和 ICO (Windows) 格式
-   # ICNS (macOS) 需要额外工具转换
+   # 使用高质量 LANCZOS 重采样算法生成多种尺寸
+   from PIL import Image
+   import os
+   
+   # 生成PNG格式（32x32, 128x128, 256x256, 512x512, 1024x1024）
+   # 生成ICO格式（Windows多尺寸图标）
+   # 生成ICNS格式（macOS图标）
+   
+   # 使用 Image.LANCZOS 确保高质量缩放，avoid压缩模糊
    ```
-3. 所有图标会自动应用到：
+3. 更新 `tauri.conf.json` 中的图标配置
+4. 所有图标会自动应用到：
    - Windows 安装包 (.msi)
    - 应用程序主窗口
    - 系统托盘图标
@@ -178,3 +223,11 @@ src-tauri/icons/
 - **设计要求**：图标应在各种尺寸下保持清晰可识别
 - **背景**：支持透明背景，也支持实色背景
 - **格式支持**：PNG, ICO, ICNS 三种主要格式
+
+## 更新记录
+
+### v1.0.1 (2024-09-14)
+- ✅ **新增**：默认开启自动启动功能，无需用户手动配置
+- ✅ **优化**：使用高质量图标生成，支持所有平台格式（PNG、ICO、ICNS）
+- ✅ **改进**：应用启动时自动配置系统自动启动，确保功能正常工作
+- ✅ **技术**：使用 LANCZOS 重采样算法生成清晰图标，避免模糊
